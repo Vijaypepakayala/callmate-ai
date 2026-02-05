@@ -1,9 +1,20 @@
-import { PrismaClient } from '@prisma/client'
-
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
+// In-memory store for demo
+export interface CallLog {
+  id: string
+  callerNumber: string
+  calledNumber: string
+  status: string
+  duration: number | null
+  summary: string | null
+  startedAt: string
 }
 
-export const db = globalForPrisma.prisma ?? new PrismaClient()
+export const callLogs: CallLog[] = []
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
+export function addCallLog(log: CallLog) {
+  callLogs.push(log)
+}
+
+export function getCallLogs() {
+  return callLogs
+}
