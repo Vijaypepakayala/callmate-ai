@@ -21,7 +21,7 @@ function Footer() {
             </div>
             <p className="text-sm text-muted-foreground max-w-md leading-relaxed">
               AI-powered receptionist with emotional neural voices. Never miss a call,
-              never lose a customer. Powered by Telnyx voice infrastructure and advanced AI.
+              never lose a customer. Powered by advanced neural voice AI.
             </p>
             <div className="flex gap-4 mt-6">
               <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
@@ -56,7 +56,7 @@ function Footer() {
 
         <div className="mt-12 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-xs text-muted-foreground">
-            © 2026 CallMate AI. All rights reserved. Powered by Telnyx.
+            © 2026 CallMate AI. All rights reserved.
           </p>
           <p className="text-xs text-muted-foreground">
             1,680+ neural voices · 84 languages · 99.999% uptime

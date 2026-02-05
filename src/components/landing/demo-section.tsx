@@ -270,7 +270,7 @@ export function DemoSection() {
                 )}
               </Button>
               <p className="mt-3 text-xs text-muted-foreground">
-                🔊 Turn your volume up — real AI voices powered by Telnyx
+                🔊 Turn your volume up — real neural AI voices
               </p>
             </div>
           </motion.div>
