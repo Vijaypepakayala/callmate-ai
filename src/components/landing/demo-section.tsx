@@ -1,10 +1,10 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Phone, Play, Pause, Volume2, Waves } from "lucide-react"
+import { Phone, Play, Pause, Volume2, Waves, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { useState } from "react"
+import { useState, useRef, useCallback } from "react"
 
 const conversationSteps = [
   {
@@ -12,48 +12,56 @@ const conversationSteps = [
     text: "Good afternoon! Thanks for calling Sunrise Dental. This is Sarah. How can I help you today?",
     emotion: "cheerful",
     ambient: null,
+    voice: "Azure.en-US-JennyNeural",
   },
   {
     role: "caller" as const,
     text: "Hi, I'd like to schedule a teeth cleaning appointment.",
     emotion: null,
     ambient: null,
+    voice: "Azure.en-US-DavisNeural",
   },
   {
     role: "ai" as const,
-    text: "Of course! I'd love to help you with that. Let me check our availability...",
+    text: "Of course! I'd love to help you with that. Let me check our availability.",
     emotion: "friendly",
     ambient: "typing",
+    voice: "Azure.en-US-JennyNeural",
   },
   {
     role: "ai" as const,
     text: "I have openings this Thursday at 2pm and Friday at 10am. Which works better for you?",
     emotion: "friendly",
     ambient: null,
+    voice: "Azure.en-US-JennyNeural",
   },
   {
     role: "caller" as const,
     text: "Thursday at 2 works great!",
     emotion: null,
     ambient: null,
+    voice: "Azure.en-US-DavisNeural",
   },
   {
     role: "ai" as const,
     text: "Perfect! And may I have your name and phone number for the appointment?",
     emotion: "cheerful",
     ambient: null,
+    voice: "Azure.en-US-JennyNeural",
   },
   {
     role: "caller" as const,
     text: "It's Michael Chen, 555-0123.",
     emotion: null,
     ambient: null,
+    voice: "Azure.en-US-DavisNeural",
   },
   {
     role: "ai" as const,
     text: "Wonderful, Michael! You're all set for Thursday at 2pm. I'll send you a confirmation text right now. Is there anything else I can help with?",
     emotion: "cheerful",
     ambient: "typing",
+    voice: "Azure.en-US-JennyNeural",
   },
 ]
 
@@ -83,30 +91,96 @@ function WaveformVisualizer({ active }: { active: boolean }) {
 
 export function DemoSection() {
   const [isPlaying, setIsPlaying] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [currentStep, setCurrentStep] = useState(-1)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const abortRef = useRef(false)
 
-  const playDemo = () => {
+  const playAudio = useCallback(async (text: string, voice: string): Promise<void> => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const res = await fetch('/api/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, voice }),
+        })
+
+        if (!res.ok) {
+          console.error('TTS failed:', res.status)
+          // Fallback: just wait based on text length
+          await new Promise(r => setTimeout(r, text.length * 40))
+          resolve()
+          return
+        }
+
+        const blob = await res.blob()
+        const url = URL.createObjectURL(blob)
+        const audio = new Audio(url)
+        audioRef.current = audio
+
+        audio.onended = () => {
+          URL.revokeObjectURL(url)
+          resolve()
+        }
+        audio.onerror = () => {
+          URL.revokeObjectURL(url)
+          resolve()
+        }
+
+        await audio.play()
+      } catch (err) {
+        console.error('Audio playback error:', err)
+        await new Promise(r => setTimeout(r, text.length * 40))
+        resolve()
+      }
+    })
+  }, [])
+
+  const playDemo = useCallback(async () => {
     if (isPlaying) {
+      abortRef.current = true
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
       setIsPlaying(false)
       setCurrentStep(-1)
       return
     }
 
+    abortRef.current = false
     setIsPlaying(true)
-    setCurrentStep(0)
+    setIsLoading(true)
 
-    // Auto-advance through conversation
-    let step = 0
-    const interval = setInterval(() => {
-      step++
-      if (step >= conversationSteps.length) {
-        clearInterval(interval)
-        setIsPlaying(false)
-        return
-      }
-      setCurrentStep(step)
-    }, 2500)
-  }
+    for (let i = 0; i < conversationSteps.length; i++) {
+      if (abortRef.current) break
+
+      setCurrentStep(i)
+      const step = conversationSteps[i]
+
+      // Small pause before each message
+      if (i > 0) await new Promise(r => setTimeout(r, 600))
+
+      setIsLoading(false)
+
+      // Play the audio for this step
+      await playAudio(step.text, step.voice)
+
+      if (abortRef.current) break
+
+      // Brief pause between messages
+      await new Promise(r => setTimeout(r, 400))
+    }
+
+    if (!abortRef.current) {
+      // Show completion badge
+      setCurrentStep(conversationSteps.length)
+      await new Promise(r => setTimeout(r, 3000))
+    }
+
+    setIsPlaying(false)
+    setCurrentStep(-1)
+  }, [isPlaying, playAudio])
 
   return (
     <section id="demo" className="relative py-32">
@@ -127,7 +201,7 @@ export function DemoSection() {
           >
             <Badge variant="outline" className="mb-6 border-purple-500/30 text-purple-400 px-4 py-1.5">
               <Waves size={12} className="mr-1.5" />
-              Live Demo
+              Live Demo with Real Neural Voices
             </Badge>
 
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
@@ -139,8 +213,9 @@ export function DemoSection() {
             </h2>
 
             <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
-              Watch a sample conversation with our AI receptionist. Notice the emotional voice,
-              the natural pauses, and the typing sounds when it &ldquo;looks something up.&rdquo;
+              Listen to a real conversation powered by Telnyx neural voices.
+              Notice the emotional tone, natural pacing, and how the AI handles
+              booking an appointment seamlessly.
             </p>
 
             <div className="mt-8 space-y-4">
@@ -175,7 +250,12 @@ export function DemoSection() {
 
             <div className="mt-10">
               <Button variant="gradient" size="lg" onClick={playDemo} className="group">
-                {isPlaying ? (
+                {isLoading ? (
+                  <>
+                    <Loader2 size={18} className="mr-2 animate-spin" />
+                    Loading Voice...
+                  </>
+                ) : isPlaying ? (
                   <>
                     <Pause size={18} className="mr-2" />
                     Stop Demo
@@ -187,6 +267,9 @@ export function DemoSection() {
                   </>
                 )}
               </Button>
+              <p className="mt-3 text-xs text-muted-foreground">
+                🔊 Turn your volume up — real AI voices powered by Telnyx
+              </p>
             </div>
           </motion.div>
 
@@ -242,7 +325,7 @@ export function DemoSection() {
                         step.role === "ai"
                           ? "rounded-tl-sm bg-indigo-500/10 border border-indigo-500/20"
                           : "rounded-tr-sm bg-zinc-800"
-                      }`}
+                      } ${idx === currentStep && isPlaying ? "ring-1 ring-indigo-500/50" : ""}`}
                     >
                       {step.role === "ai" && (
                         <div className="flex items-center gap-1.5 mb-1">
@@ -269,7 +352,7 @@ export function DemoSection() {
                   </motion.div>
                 ))}
 
-                {isPlaying && currentStep >= conversationSteps.length - 1 && (
+                {currentStep >= conversationSteps.length && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
