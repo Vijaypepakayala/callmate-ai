@@ -150,9 +150,9 @@ export function Hero() {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
             >
-              <Link href="/login?register=true">
+              <Link href="/book">
                 <Button variant="gradient" size="xl" className="w-full sm:w-auto group">
-                  Start Free Trial
+                  Book a Meeting
                   <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>

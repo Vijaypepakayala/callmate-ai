@@ -33,7 +33,7 @@ export function Pricing() {
             </span>
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Every plan includes a 14-day free trial. No credit card required.
+            All plans are customized to your needs. Talk to us to get started.
             Cancel anytime — no questions asked.
           </p>
         </motion.div>
@@ -82,7 +82,7 @@ export function Pricing() {
                 ))}
               </ul>
 
-              <Link href="/login?register=true" className="block">
+              <Link href="/book" className="block">
                 <Button
                   variant={tier.highlighted ? "gradient" : "outline"}
                   className="w-full"
