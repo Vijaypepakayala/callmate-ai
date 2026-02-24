@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from "next/server"
 const TELNYX_API_KEY = process.env.TELNYX_API_KEY!
 const FROM_NUMBER = "+27101579079"
 const CONNECTION_ID = "2902230293131822598"
-const WEBHOOK_URL = "https://callmate-ai-omega.vercel.app/api/webhook"
 
 const ASSISTANT_MAP: Record<string, string> = {
   clinicmate: "assistant-5df07b81-fe5d-489f-ac82-c8679bbbfe2b",
@@ -33,6 +32,36 @@ function recordCall(ip: string) {
   rateLimitMap.set(ip, timestamps)
 }
 
+async function pollCallStatus(callControlId: string, maxAttempts: number = 30): Promise<boolean> {
+  // Poll by attempting ai_assistant_start until the call is answered
+  for (let i = 0; i < maxAttempts; i++) {
+    await new Promise(r => setTimeout(r, 1000))
+    
+    const res = await fetch(
+      `https://api.telnyx.com/v2/calls/${callControlId}/actions/ai_assistant_start`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${TELNYX_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          assistant: { id: "assistant-42b7b64d-14ad-4d2b-ac47-0233e155b561" },
+        }),
+      }
+    )
+    const data = await res.json()
+    
+    if (res.ok) return true
+    
+    const code = data?.errors?.[0]?.code
+    if (code === "90034") continue // not answered yet
+    if (code === "90018") return false // call ended
+    return false // unknown error
+  }
+  return false
+}
+
 export async function POST(request: NextRequest) {
   try {
     const ip =
@@ -49,7 +78,6 @@ export async function POST(request: NextRequest) {
 
     const { phoneNumber, useCase } = await request.json()
 
-    // Validate phone number
     if (
       !phoneNumber ||
       typeof phoneNumber !== "string" ||
@@ -62,7 +90,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate use case
     const assistantId = ASSISTANT_MAP[useCase]
     if (!assistantId) {
       return NextResponse.json(
@@ -71,12 +98,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Encode assistant_id in client_state for the webhook to use
     const clientState = Buffer.from(
       JSON.stringify({ assistant_id: assistantId, use_case: useCase })
     ).toString("base64")
 
-    // Initiate outbound call via Telnyx Call Control
+    // Initiate outbound call
     const callRes = await fetch("https://api.telnyx.com/v2/calls", {
       method: "POST",
       headers: {
@@ -89,7 +115,7 @@ export async function POST(request: NextRequest) {
         from: FROM_NUMBER,
         answering_machine_detection: "disabled",
         client_state: clientState,
-        webhook_url: WEBHOOK_URL,
+        webhook_url: "https://callmate-ai-omega.vercel.app/api/webhook",
         webhook_url_method: "POST",
       }),
     })
