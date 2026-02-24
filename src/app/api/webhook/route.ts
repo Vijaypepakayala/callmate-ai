@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
         console.log(`[Webhook] Starting AI assistant: ${clientState.assistant_id}`)
 
         const res = await fetch(
-          `https://api.telnyx.com/v2/calls/${payload.call_control_id}/actions/start_ai_assistant`,
+          `https://api.telnyx.com/v2/calls/${payload.call_control_id}/actions/ai_assistant_start`,
           {
             method: "POST",
             headers: {
