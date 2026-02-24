@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 
 const TELNYX_API_KEY = process.env.TELNYX_API_KEY!
 const FROM_NUMBER = "+27101579079"
-const CONNECTION_ID = "1902100886000240089"
+const CONNECTION_ID = "2902230293131822598"
 const WEBHOOK_URL = "https://callmate-ai-omega.vercel.app/api/webhook"
 
 const ASSISTANT_MAP: Record<string, string> = {
