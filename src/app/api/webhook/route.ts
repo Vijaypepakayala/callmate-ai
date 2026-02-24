@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              assistant: { id: assistantId.replace("assistant-", "") },
+              assistant: { id: assistantId },
             }),
           }
         )
