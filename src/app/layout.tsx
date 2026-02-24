@@ -5,13 +5,13 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "CallMate AI — AI Receptionist That Never Misses a Call",
+  title: "Telnyx Voice AI — 8 Industries, One Platform",
   description:
-    "AI-powered receptionist with emotional neural voices, smart conversation, and office ambiance. Books appointments, takes messages, answers questions — so natural callers can't tell the difference.",
+    "Experience AI voice agents that sound human across 8 industries. Pick a use case, enter your number, and get called in seconds.",
   openGraph: {
-    title: "CallMate AI — AI Receptionist That Never Misses a Call",
+    title: "Telnyx Voice AI — 8 Industries, One Platform",
     description:
-      "AI-powered receptionist with emotional neural voices. Books appointments, takes messages, answers questions.",
+      "Experience AI voice agents that sound human across 8 industries. Real phone calls, sub-second latency.",
     type: "website",
   },
 }
