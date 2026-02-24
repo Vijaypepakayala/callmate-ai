@@ -41,8 +41,6 @@ export async function POST(request: NextRequest) {
             },
             body: JSON.stringify({
               assistant: { id: assistantId },
-              voice: { voice: "Telnyx.NaturalHD.astra" },
-              transcription: { model: "distil-whisper/distil-large-v2", language: "auto" },
             }),
           }
         )
