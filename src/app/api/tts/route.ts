@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { DEMO_VOICES } from '@/lib/demo-config'
 
 const TELNYX_API_KEY = process.env.TELNYX_API_KEY
+const allowedVoices = new Set<string>(Object.values(DEMO_VOICES))
 
 // Simple rate limiter: max 20 requests per minute per IP
 const rateLimit = new Map<string, { count: number; resetAt: number }>()
@@ -26,8 +28,14 @@ export async function POST(req: NextRequest) {
 
     const { text, voice } = await req.json()
 
-    if (!text || text.length > 500) {
+    if (typeof text !== 'string' || !text.trim() || text.length > 500) {
       return NextResponse.json({ error: 'Text required (max 500 chars)' }, { status: 400 })
+    }
+    if (voice !== undefined && (typeof voice !== 'string' || !allowedVoices.has(voice))) {
+      return NextResponse.json({ error: 'Unknown demo voice' }, { status: 400 })
+    }
+    if (!TELNYX_API_KEY) {
+      return NextResponse.json({ error: 'Speech is temporarily unavailable' }, { status: 503 })
     }
 
     const response = await fetch('https://api.telnyx.com/v2/text-to-speech/speech', {
@@ -38,8 +46,9 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         text,
-        voice: voice || 'Azure.en-US-JennyNeural',
-        output_format: 'mp3',
+        voice: voice || DEMO_VOICES.clinicmate,
+        output_type: 'binary_output',
+        telnyx: { response_format: 'mp3' },
       }),
     })
 
@@ -53,8 +62,8 @@ export async function POST(req: NextRequest) {
 
     return new NextResponse(audioBuffer, {
       headers: {
-        'Content-Type': 'audio/mpeg',
-        'Cache-Control': 'public, max-age=86400',
+        'Content-Type': response.headers.get('content-type') || 'audio/mpeg',
+        'Cache-Control': 'no-store',
       },
     })
   } catch (error) {

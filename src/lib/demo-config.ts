@@ -11,6 +11,17 @@ export const DEMOS = {
 
 export type DemoId = keyof typeof DEMOS
 
+export const DEMO_VOICES: Record<DemoId, string> = {
+  clinicmate: "Telnyx.Bayan.Amanda",
+  orderai: "Telnyx.Bayan.Brian",
+  debtshield: "Telnyx.Bayan.David",
+  propbot: "Telnyx.Bayan.Sandra",
+  tutorcall: "Telnyx.Bayan.Suzan",
+  recruitai: "Telnyx.Bayan.Michael",
+  fitcall: "Telnyx.Bayan.Arjun",
+  legalease: "Telnyx.Bayan.Barbara",
+}
+
 export function isDemoId(value: unknown): value is DemoId {
   return typeof value === "string" && Object.prototype.hasOwnProperty.call(DEMOS, value)
 }

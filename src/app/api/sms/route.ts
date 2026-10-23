@@ -11,7 +11,7 @@ function number(value: Address | Address[] | undefined): string | null {
 
 export async function POST(request: NextRequest) {
   const secret = process.env.TELNYX_WEBHOOK_SECRET
-  if (secret && request.nextUrl.searchParams.get("token") !== secret) {
+  if (!secret || request.nextUrl.searchParams.get("token") !== secret) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
   let event: { data?: { event_type?: string; payload?: { from?: Address; to?: Address[]; text?: string } } }

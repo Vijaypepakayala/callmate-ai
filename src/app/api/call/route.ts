@@ -30,12 +30,12 @@ export async function POST(request: NextRequest) {
   }
 
   const apiKey = process.env.TELNYX_API_KEY
-  const connectionId = process.env.TELNYX_CALL_CONTROL_APP_ID || "2902230293131822598"
-  const from = demoNumbers()[body.useCase] || process.env.TELNYX_DEMO_FROM_NUMBER || "+27101579079"
+  const connectionId = process.env.TELNYX_CALL_CONTROL_APP_ID
+  const from = demoNumbers()[body.useCase]
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://callmate-ai-omega.vercel.app"
   const webhookSecret = process.env.TELNYX_WEBHOOK_SECRET
-  if (!apiKey) {
-    console.error("[API:call] TELNYX_API_KEY is missing")
+  if (!apiKey || !connectionId || !from || !webhookSecret) {
+    console.error("[API:call] Telnyx configuration is incomplete")
     return NextResponse.json({ error: "Calling is temporarily unavailable." }, { status: 503 })
   }
 
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
         from,
         answering_machine_detection: "disabled",
         client_state: clientState,
-        webhook_url: `${baseUrl.replace(/\/$/, "")}/api/webhook${webhookSecret ? `?token=${encodeURIComponent(webhookSecret)}` : ""}`,
+        webhook_url: `${baseUrl.replace(/\/$/, "")}/api/webhook?token=${encodeURIComponent(webhookSecret)}`,
         webhook_url_method: "POST",
       }),
     })

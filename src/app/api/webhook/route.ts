@@ -44,7 +44,7 @@ function isAudioTest(clientState: unknown): boolean {
 
 export async function POST(request: NextRequest) {
   const secret = process.env.TELNYX_WEBHOOK_SECRET
-  if (secret && request.nextUrl.searchParams.get("token") !== secret) {
+  if (!secret || request.nextUrl.searchParams.get("token") !== secret) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
   let event: { data?: { event_type?: string; payload?: { call_control_id?: string; client_state?: string; direction?: string; to?: string } } }

@@ -15,59 +15,6 @@ export interface VoiceConfig {
   pitch: string
 }
 
-export interface AzureVoice {
-  name: string
-  displayName: string
-  gender: 'Female' | 'Male'
-  locale: string
-  supportedStyles: VoiceStyle[]
-}
-
-export const AZURE_VOICES: AzureVoice[] = [
-  {
-    name: 'en-US-JennyNeural',
-    displayName: 'Jenny',
-    gender: 'Female',
-    locale: 'en-US',
-    supportedStyles: ['cheerful', 'empathetic', 'friendly', 'hopeful', 'sad', 'serious'],
-  },
-  {
-    name: 'en-US-AriaNeural',
-    displayName: 'Aria',
-    gender: 'Female',
-    locale: 'en-US',
-    supportedStyles: ['cheerful', 'empathetic', 'friendly', 'hopeful', 'sad', 'serious'],
-  },
-  {
-    name: 'en-US-GuyNeural',
-    displayName: 'Guy',
-    gender: 'Male',
-    locale: 'en-US',
-    supportedStyles: ['cheerful', 'empathetic', 'friendly', 'serious'],
-  },
-  {
-    name: 'en-US-SaraNeural',
-    displayName: 'Sara',
-    gender: 'Female',
-    locale: 'en-US',
-    supportedStyles: ['cheerful', 'empathetic', 'friendly', 'hopeful', 'serious'],
-  },
-  {
-    name: 'en-US-DavisNeural',
-    displayName: 'Davis',
-    gender: 'Male',
-    locale: 'en-US',
-    supportedStyles: ['cheerful', 'empathetic', 'friendly', 'hopeful', 'serious'],
-  },
-  {
-    name: 'en-GB-SoniaNeural',
-    displayName: 'Sonia (British)',
-    gender: 'Female',
-    locale: 'en-GB',
-    supportedStyles: ['cheerful', 'empathetic', 'friendly', 'sad', 'serious'],
-  },
-]
-
 export const VOICE_PERSONALITIES: Record<VoicePersonality, { label: string; description: string; defaultStyle: VoiceStyle; defaultRate: string; defaultPitch: string }> = {
   'warm-friendly': {
     label: 'Warm & Friendly',
