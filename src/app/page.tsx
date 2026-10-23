@@ -9,6 +9,7 @@ type ChatMessage = { role: "ai" | "caller"; name: string; text: string }
 const USE_CASES = [
   {
     id: "clinicmate",
+    number: "+17406438369",
     emoji: "🏥",
     name: "ClinicMate",
     tagline: "Medical Receptionist",
@@ -25,11 +26,12 @@ const USE_CASES = [
       { role: "caller" as const, name: "Caller", text: "Hi, I need to schedule a checkup with Dr. Patel." },
       { role: "ai" as const, name: "Sarah", text: "Of course! Dr. Patel has openings Thursday at 10am and Friday at 2pm. Which works better?" },
       { role: "caller" as const, name: "Caller", text: "Thursday at 10 works great." },
-      { role: "ai" as const, name: "Sarah", text: "Perfect! You're booked for Thursday at 10am with Dr. Patel. I'll send you a confirmation text now. Anything else?" },
+      { role: "ai" as const, name: "Sarah", text: "For this demo, I can show you how a booking confirmation would sound. No real appointment has been made." },
     ],
   },
   {
     id: "orderai",
+    number: "+18782343114",
     emoji: "🍕",
     name: "OrderAI",
     tagline: "Restaurant Ordering",
@@ -46,11 +48,12 @@ const USE_CASES = [
       { role: "caller" as const, name: "Caller", text: "I'd like a large pepperoni pizza and some garlic knots." },
       { role: "ai" as const, name: "Marco", text: "Great taste! Large pepperoni and garlic knots — you want any dipping sauces? Marinara or ranch?" },
       { role: "caller" as const, name: "Caller", text: "Marinara please. And a 2-liter Coke." },
-      { role: "ai" as const, name: "Marco", text: "You got it! That'll be $24.50. Ready in about 20 minutes. Want delivery or pickup?" },
+      { role: "ai" as const, name: "Marco", text: "You got it! In a real ordering flow, I would confirm the total and pickup or delivery. This demo does not place an order." },
     ],
   },
   {
     id: "debtshield",
+    number: "+18287428480",
     emoji: "🛡️",
     name: "DebtShield",
     tagline: "Bill Negotiator",
@@ -72,6 +75,7 @@ const USE_CASES = [
   },
   {
     id: "propbot",
+    number: "+17602328916",
     emoji: "🏠",
     name: "PropBot",
     tagline: "Real Estate Agent",
@@ -88,11 +92,12 @@ const USE_CASES = [
       { role: "caller" as const, name: "Caller", text: "Looking to buy. 3-bedroom with a garden, under $450K." },
       { role: "ai" as const, name: "Jessica", text: "I've got just the thing! There's a charming 3-bed in Oakwood — open-plan kitchen, mature garden with a patio, and it's listed at $425K. Shall I book a viewing?" },
       { role: "caller" as const, name: "Caller", text: "Yes! This weekend if possible." },
-      { role: "ai" as const, name: "Jessica", text: "Saturday at 11am works! I'll text you the address and some photos. You're going to love the natural light in the living room." },
+      { role: "ai" as const, name: "Jessica", text: "I can demonstrate the viewing flow, but this property and appointment are examples." },
     ],
   },
   {
     id: "tutorcall",
+    number: "+19734005563",
     emoji: "🌍",
     name: "TutorCall",
     tagline: "Language Tutor",
@@ -114,6 +119,7 @@ const USE_CASES = [
   },
   {
     id: "recruitai",
+    number: "+19794018339",
     emoji: "🎯",
     name: "RecruitAI",
     tagline: "Candidate Screening",
@@ -135,6 +141,7 @@ const USE_CASES = [
   },
   {
     id: "fitcall",
+    number: "+19853008451",
     emoji: "💪",
     name: "FitCall",
     tagline: "Personal Trainer",
@@ -156,6 +163,7 @@ const USE_CASES = [
   },
   {
     id: "legalease",
+    number: "+14407448174",
     emoji: "⚖️",
     name: "LegalEase",
     tagline: "Legal Intake",
@@ -172,7 +180,7 @@ const USE_CASES = [
       { role: "caller" as const, name: "Caller", text: "I was in a car accident last week and I think I need a lawyer." },
       { role: "ai" as const, name: "Amanda", text: "I'm sorry to hear that. First, are you okay? Have you received medical treatment?" },
       { role: "caller" as const, name: "Caller", text: "Yes, I went to the ER. Got some whiplash and a bruised rib." },
-      { role: "ai" as const, name: "Amanda", text: "I'm glad you got checked out. I'll need a few details — the date, location, and whether a police report was filed. Then we'll schedule a free consultation with one of our attorneys." },
+      { role: "ai" as const, name: "Amanda", text: "I'm glad you got checked out. I'll need a few details — the date, location, and whether a police report was filed. This demo cannot schedule a real consultation or give legal advice." },
     ],
   },
 ]
@@ -192,7 +200,7 @@ function CallModal({
 
   const handleCall = async () => {
     if (!phone.startsWith("+") || phone.length < 11) {
-      setError("Enter a valid phone number with country code (e.g. +27821234567)")
+      setError("Enter a valid phone number with country code (e.g. +15551234567)")
       return
     }
     setState("loading")
@@ -245,6 +253,11 @@ function CallModal({
           <p className="text-sm text-zinc-400">{useCase.expect}</p>
         </div>
 
+        <div className="mb-5 rounded-lg border border-zinc-700 bg-zinc-800/60 p-3 text-sm text-zinc-300">
+          <p>Call this demo directly: <a className="text-indigo-300 underline" href={`tel:${useCase.number}`}>{useCase.number}</a></p>
+          <p className="mt-1 text-xs text-zinc-400">SMS replies may be limited until US carrier registration is approved.</p>
+        </div>
+
         {state === "success" ? (
           <motion.div
             initial={{ scale: 0.8 }}
@@ -263,7 +276,7 @@ function CallModal({
               </label>
               <input
                 type="tel"
-                placeholder="+27 82 123 4567"
+                placeholder="+1 555 123 4567"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 text-white placeholder-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors"
@@ -354,7 +367,7 @@ function ChatCarousel({ useCases, onTryLive }: { useCases: typeof USE_CASES; onT
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-emerald-400">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Live
+                  Sample
                 </div>
               </div>
 
@@ -428,17 +441,17 @@ export default function Home() {
 
             <p className="mt-4 text-lg text-zinc-400 max-w-2xl mx-auto">
               Experience AI voice agents that sound human, understand context, and handle
-              real conversations. Pick a use case, enter your number, and get called in seconds.
+              real conversations in eight fictional business scenarios. Pick a demo, enter your number, and get called.
             </p>
 
             <div className="mt-8 flex items-center justify-center gap-6 text-sm text-zinc-500">
               <div className="flex items-center gap-2">
                 <Zap className="h-4 w-4 text-indigo-400" />
-                Sub-second latency
+                Eight distinct voices
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-indigo-400" />
-                Real phone calls
+                Portfolio demonstrations
               </div>
             </div>
           </motion.div>
@@ -483,9 +496,9 @@ export default function Home() {
       <section className="pb-20">
         <div className="max-w-6xl mx-auto px-4 mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-white text-center">
-            Live Conversation Previews
+            Sample Conversations
           </h2>
-          <p className="text-zinc-400 text-center mt-2">Scroll through to see each AI agent in action →</p>
+          <p className="text-zinc-400 text-center mt-2">Illustrative scripts. Real calls are generated live by each assistant. →</p>
         </div>
         <ChatCarousel useCases={USE_CASES} onTryLive={setSelected} />
       </section>
@@ -522,7 +535,7 @@ export default function Home() {
           >
             Telnyx
           </a>{" "}
-          Voice AI · Built with ❤️
+          Voice AI · Fictional portfolio demos; no real bookings, orders, or professional services.
         </p>
       </footer>
 

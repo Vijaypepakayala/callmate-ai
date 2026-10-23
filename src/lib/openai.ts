@@ -5,9 +5,12 @@
 import OpenAI from 'openai'
 import type { ConversationMessage, CallerIntent, VoiceStyle } from '@/types'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+function openaiClient() {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY is required for the legacy receptionist flow')
+  }
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+}
 
 // ============================================================
 // System Prompt Builder
@@ -95,7 +98,7 @@ export async function getAIResponse(
     })),
   ]
 
-  const response = await openai.chat.completions.create({
+  const response = await openaiClient().chat.completions.create({
     model: 'gpt-4o-mini',
     messages: chatMessages,
     temperature: 0.7,
@@ -168,7 +171,7 @@ export async function summarizeCall(messages: ConversationMessage[]): Promise<{
     .map(m => `${m.role === 'user' ? 'Caller' : 'AI'}: ${m.content}`)
     .join('\n')
 
-  const response = await openai.chat.completions.create({
+  const response = await openaiClient().chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
       {

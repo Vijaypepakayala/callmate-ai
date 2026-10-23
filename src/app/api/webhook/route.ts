@@ -1,66 +1,80 @@
+import { createHash } from "node:crypto"
 import { NextRequest, NextResponse } from "next/server"
+import { DEMOS, demoForNumber, isDemoId, type DemoId } from "@/lib/demo-config"
 
-const TELNYX_API_KEY = process.env.TELNYX_API_KEY!
+function commandId(callControlId: string, action: string): string {
+  const hex = createHash("sha256").update(`${callControlId}:${action}`).digest("hex")
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20, 32)}`
+}
+
+async function callAction(callControlId: string, action: string, body: Record<string, unknown>) {
+  const response = await fetch(`https://api.telnyx.com/v2/calls/${encodeURIComponent(callControlId)}/actions/${action}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.TELNYX_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ ...body, command_id: commandId(callControlId, action) }),
+  })
+  if (!response.ok) {
+    const result = await response.json().catch(() => ({}))
+    console.error(`[Webhook] ${action} failed`, response.status, result?.errors?.map((e: { code?: string }) => e.code))
+  }
+  return response.ok
+}
+
+function demoFromClientState(clientState: unknown): DemoId | null {
+  if (typeof clientState !== "string") return null
+  try {
+    const data = JSON.parse(Buffer.from(clientState, "base64").toString("utf8"))
+    return isDemoId(data?.use_case) ? data.use_case : null
+  } catch {
+    return null
+  }
+}
 
 export async function POST(request: NextRequest) {
+  const secret = process.env.TELNYX_WEBHOOK_SECRET
+  if (secret && request.nextUrl.searchParams.get("token") !== secret) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  let event: { data?: { event_type?: string; payload?: { call_control_id?: string; client_state?: string; direction?: string; to?: string } } }
   try {
-    const body = await request.json()
-    
-    // Telnyx webhook structure: body.data.event_type and body.data.payload
-    const eventType = body?.data?.event_type
-    const payload = body?.data?.payload
-    const callControlId = payload?.call_control_id
-    const clientState = payload?.client_state
+    event = await request.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+  }
+  const type = event.data?.event_type
+  const payload = event.data?.payload
+  const callControlId = payload?.call_control_id
+  if (!callControlId || !type) return NextResponse.json({ received: true })
 
-    console.log(`[Webhook] Event: ${eventType}, call_control_id: ${callControlId}, client_state present: ${!!clientState}`)
-
-    // When call is answered, start the AI assistant
-    if (eventType === "call.answered" && callControlId) {
-      let assistantId: string | null = null
-
-      if (clientState) {
-        try {
-          const decoded = JSON.parse(Buffer.from(clientState, "base64").toString())
-          assistantId = decoded.assistant_id
-          console.log(`[Webhook] Decoded assistant_id: ${assistantId}`)
-        } catch (e) {
-          console.error("[Webhook] Failed to decode client_state:", e)
-        }
+  try {
+    if (type === "call.initiated" && payload.direction === "incoming") {
+      const demo = demoForNumber(payload.to)
+      if (!demo) {
+        console.error("[Webhook] Inbound call to an unmapped number")
+        return NextResponse.json({ received: true })
       }
-
-      if (assistantId) {
-        console.log(`[Webhook] Starting AI assistant ${assistantId} on call ${callControlId}`)
-
-        const res = await fetch(
-          `https://api.telnyx.com/v2/calls/${callControlId}/actions/ai_assistant_start`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${TELNYX_API_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              assistant: { id: assistantId },
-            }),
-          }
-        )
-
-        const data = await res.json()
-        console.log(`[Webhook] ai_assistant_start response (${res.status}):`, JSON.stringify(data))
-      } else {
-        console.log("[Webhook] No assistant_id found, skipping")
-      }
+      const clientState = Buffer.from(JSON.stringify({ use_case: demo })).toString("base64")
+      const ok = await callAction(callControlId, "answer", { client_state: clientState })
+      return NextResponse.json({ received: ok }, { status: ok ? 200 : 502 })
     }
 
-    // Also handle call.initiated - answer outbound calls
-    if (eventType === "call.initiated" && callControlId && payload?.direction === "outgoing") {
-      console.log(`[Webhook] Outgoing call initiated, will wait for answer event`)
+    if (type === "call.answered") {
+      const demo = demoFromClientState(payload.client_state) || demoForNumber(payload.to)
+      if (!demo) {
+        console.error("[Webhook] Answered call without a known demo")
+        return NextResponse.json({ received: true })
+      }
+      const ok = await callAction(callControlId, "ai_assistant_start", { assistant: { id: DEMOS[demo] } })
+      if (ok) console.log(`[Webhook] Started ${demo} assistant`)
+      return NextResponse.json({ received: ok }, { status: ok ? 200 : 502 })
     }
-
-    return NextResponse.json({ received: true }, { status: 200 })
+    return NextResponse.json({ received: true })
   } catch (error) {
-    console.error("[Webhook] Error:", error)
-    return NextResponse.json({ received: true }, { status: 200 })
+    console.error("[Webhook] Command failed", error)
+    return NextResponse.json({ received: false }, { status: 502 })
   }
 }
 
