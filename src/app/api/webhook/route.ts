@@ -33,6 +33,15 @@ function demoFromClientState(clientState: unknown): DemoId | null {
   }
 }
 
+function isAudioTest(clientState: unknown): boolean {
+  if (typeof clientState !== "string") return false
+  try {
+    return JSON.parse(Buffer.from(clientState, "base64").toString("utf8"))?.audio_test === true
+  } catch {
+    return false
+  }
+}
+
 export async function POST(request: NextRequest) {
   const secret = process.env.TELNYX_WEBHOOK_SECRET
   if (secret && request.nextUrl.searchParams.get("token") !== secret) {
@@ -62,6 +71,14 @@ export async function POST(request: NextRequest) {
     }
 
     if (type === "call.answered") {
+      if (isAudioTest(payload.client_state)) {
+        const ok = await callAction(callControlId, "speak", {
+          payload: "This is the CallMate audio test. If you can hear this, please say hello after the tone.",
+          voice: "female",
+          language: "en-US",
+        })
+        return NextResponse.json({ received: ok }, { status: ok ? 200 : 502 })
+      }
       const demo = demoFromClientState(payload.client_state) || demoForNumber(payload.to)
       if (!demo) {
         console.error("[Webhook] Answered call without a known demo")
